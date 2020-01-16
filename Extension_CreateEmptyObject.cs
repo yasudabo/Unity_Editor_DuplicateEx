@@ -1,4 +1,4 @@
-﻿using UnityEngine;
+using UnityEngine;
 using UnityEditor;
 using System.Collections.Generic;
 
@@ -28,7 +28,7 @@ using System.Collections.Generic;
 
 
 /// <summary> 複製物件，且對後綴編號做不同處理 </summary>
-public class CreateEmptyObject_NoSerialNumber {
+public class Extension_CreateEmptyObject {
 
 
     /// <summary> 用來判斷是否使用過「名稱不變的複製功能」 </summary>
@@ -40,7 +40,7 @@ public class CreateEmptyObject_NoSerialNumber {
     
 
 
-    static CreateEmptyObject_NoSerialNumber() {
+    static Extension_CreateEmptyObject() {
 
         //設置標籤風格
         guiSelectedStyle.normal.textColor = Color.green;
@@ -68,7 +68,7 @@ public class CreateEmptyObject_NoSerialNumber {
     }
 
 
-    /// <summary>  </summary>
+    /// <summary> 繪製 New 標籤 </summary>
     /// <param name="instanceID"   ></param>
     /// <param name="selectionRect"></param>
     private static void HierarchyWindowItemOnGUI(int instanceID, Rect selectionRect) {
@@ -86,7 +86,7 @@ public class CreateEmptyObject_NoSerialNumber {
 
     /// <summary> 【 Ctrl + Shift + D 】複製物件至原物件下方，且名稱不變 </summary>
     [MenuItem("GameObject/擴展集/複製物件 (省略後綴) %#d", false, -1)]
-    static void CreateEmptyObjec2t() {
+    static void CreateEmptyObjec_NoSerialNumber() {
 
         guiSelectedList.Clear();
         List<int> newSelectList = new List<int>();
@@ -99,7 +99,7 @@ public class CreateEmptyObject_NoSerialNumber {
                 tCopy.transform.SetSiblingIndex(tOrigin.transform.GetSiblingIndex() + 1);
                 newSelectList.Add(tCopy.GetInstanceID());
                 guiSelectedList.Add(tCopy.GetInstanceID());
-                Undo.RegisterCreatedObjectUndo(tCopy, "deplicate");
+                Undo.RegisterCreatedObjectUndo(tCopy, "DeplicateEx");
             }
             else {
                 string newPath = AssetDatabase.GenerateUniqueAssetPath(path);
@@ -119,13 +119,14 @@ public class CreateEmptyObject_NoSerialNumber {
 
     /// <summary>【 Ctrl + Alt + D 】複製物件且名稱保留編號，但物件會在原物件下方，而不會像預設的複製把複製出來的物件移到最底下 </summary>
     [MenuItem("GameObject/擴展集/複製物件 (複製於原物件下方) %&d", false, -1)]
-    static void CreateEmptyObjec3t() {
+    static void CreateEmptyObjec_NotAtBottom() {
         int index = 0;                                    //記錄相同名稱物件的編號
         string tmpName = "";                              //記錄複製物件的名稱
         GameObject tmpObj = null;                         //記錄複製出來的物件
         GameObject goLastObj = null;                      //記錄含有相同名稱的物件中編號最大的那個
         List<GameObject> goList = new List<GameObject>(); //記錄含有相同名稱的物件有哪些
 
+        List<int> newSelectList = new List<int>();
         foreach (Object obj in Selection.objects) {
             string path = AssetDatabase.GetAssetPath(obj);
 
@@ -184,9 +185,10 @@ public class CreateEmptyObject_NoSerialNumber {
                 else {
                     tmpObj.transform.SetSiblingIndex(gameObject.transform.GetSiblingIndex() + 1);
                 }
-                
+                newSelectList.Add(tmpObj.GetInstanceID());
+
                 //記錄還原項目
-                Undo.RegisterCreatedObjectUndo(tmpObj, "Deplicate");
+                Undo.RegisterCreatedObjectUndo(tmpObj, "DeplicateEx");
             }
 
             //複製檔案
@@ -195,11 +197,14 @@ public class CreateEmptyObject_NoSerialNumber {
                 AssetDatabase.CopyAsset(path, newPath);
             }
         }
+        if (newSelectList != null) {
+            if (newSelectList.Count == 0) {
+                return;
+            }
+            Selection.instanceIDs = newSelectList.ToArray();
+            newSelectList.Clear();
+        }
     }
-
-
- 
-
 
 
 }
